@@ -28,7 +28,7 @@ const Dashboard = () => {
 
 
   return (
-    <div>
+    <div style={{ padding: "20px" }}>
       <h2>All Users:</h2>
       <ul>
         {Object.entries(users)
