@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { auth } from "../../firebase";
 import { useLocation, useNavigate } from "react-router-dom";
-import { getDatabase, onValue, push, ref, remove } from "firebase/database";
+import { getDatabase, onValue, push, ref, remove, update } from "firebase/database";
 
 const Chat = () => {
     const { state } = useLocation();
@@ -11,8 +11,10 @@ const Chat = () => {
     const [message, setMessage] = useState("");
     const [isDelete, setIsDelete] = useState({
         deleteConversation: false,
-        deleteMessage: false
+        deleteMessage: false,
+        deleteId: ''
     });
+    const [editState, setEditState] = useState({ id: null, text: "" });
     const [chats, setChats] = useState([]);
     const chatId = [currentUser?.email, state?.email].sort().join("_").replace(/[^a-zA-Z0-9]/g, "_");
     const chatRef = ref(db, "chats/" + chatId + "/messages");
@@ -61,6 +63,39 @@ const Chat = () => {
             });
     };
 
+
+    const handleEdit = (id, currentText) => {
+        setEditState({ id, text: currentText });
+    };
+
+    const handleDeleteMessage = async (messageId) => {
+        const messageRef = ref(db, `chats/${chatId}/messages/${messageId}`);
+        try {
+            await remove(messageRef);
+            alert("Message deleted successfully!");
+            setIsDelete((prev) => ({
+                    ...prev,
+                    deleteId: '',
+                    deleteMessage: false,
+                }));
+        } catch (err) {
+            console.error("Error deleting message:", err);
+        }
+    };
+
+    const handleSaveEdit = async () => {
+        if (!editState.text.trim()) return;
+
+        const messageRef = ref(db, `chats/${chatId}/messages/${editState.id}`);
+        try {
+            await update(messageRef, { text: editState.text });
+            setEditState({ id: null, text: "" });
+        } catch (err) {
+            console.error("Error updating message:", err);
+        }
+    };
+
+
     return (
         <>
             <div style={chatStyles.container}>
@@ -79,22 +114,37 @@ const Chat = () => {
                             justifyContent: chat?.sender === currentUser?.email ? "flex-end" : "flex-start",
                             marginBottom: "8px",
                         }}>
-                            <div style={{
-                                maxWidth: "60%",
-                                padding: "8px 12px",
-                                borderRadius: "15px",
-                                background: chat?.sender === currentUser?.email ? "#DCF8C6" : "#fff",
-                                border: "1px solid #ccc",
-                                wordWrap: "break-word",
-                            }}>
-                                {chat?.text}
-                                {chat?.sender === currentUser?.email && (
-                                    <div style={{ fontSize: "12px", marginTop: "5px", textAlign: "right" }}>
-                                        <button onClick={() => handleEdit(chat?.id, chat?.text)} style={{ marginRight: "8px" }}>Edit</button>
-                                        <button onClick={() => handleDeleteMessage(chat?.id)}>Delete</button>
+
+                            {editState.id === chat.id ? (
+                                <>
+                                    <input
+                                        value={editState.text}
+                                        onChange={(e) =>
+                                            setEditState((prev) => ({ ...prev, text: e.target.value }))
+                                        }
+                                    />
+                                    <button onClick={handleSaveEdit}>Save</button>
+                                    <button onClick={() => setEditState({ id: null, text: "" })}>Cancel</button>
+                                </>
+                            ) : (
+                                <>
+                                    <div style={{
+                                        maxWidth: "60%",
+                                        padding: "8px 12px",
+                                        borderRadius: "15px",
+                                        background: chat?.sender === currentUser?.email ? "#DCF8C6" : "#fff",
+                                        border: "1px solid #ccc",
+                                        wordWrap: "break-word",
+                                    }}>
+                                        {chat?.text}
                                     </div>
-                                )}
-                            </div>
+                                    <div>
+                                        <button onClick={() => handleEdit(chat.id, chat.text)}>Edit</button>
+                                        <button onClick={() => setIsDelete({ deleteMessage: true, deleteId: chat.id })}>Delete</button>
+                                    </div>
+                                </>
+                            )}
+
                         </div>
                     ))}
                 </div>
@@ -111,7 +161,7 @@ const Chat = () => {
                     <button onClick={handleSend} style={chatStyles.sendButton}>Send</button>
                 </div>
             </div>
-            {isDelete.deleteConversation && (
+            {(isDelete.deleteConversation || isDelete.deleteMessage) && (
                 <div className="popup-overlay">
                     <div className="popup-content">
                         <h2>
@@ -138,9 +188,9 @@ const Chat = () => {
                         </button>
                         <button
                             onClick={() => {
-                                // if (isDelete.deleteMessage) {
-                                //     handleDeleteMessage(isDelete.deleteId);
-                                // }
+                                if (isDelete.deleteMessage) {
+                                    handleDeleteMessage(isDelete.deleteId);
+                                }
                                 if (isDelete.deleteConversation) {
                                     handleDeleteConversation();
                                 }
