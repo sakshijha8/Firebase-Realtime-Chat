@@ -3,13 +3,14 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "fire
 import Input from "../../components/Input";
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, onValue, ref, set, update } from "firebase/database";
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 const Login = () => {
     const navigate = useNavigate()
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-
+    const [showPassword, setShowPassword] = useState(false);
     const handleCreateUser = async (email, password) => {
         try {
             await createUserWithEmailAndPassword(auth, email, password)
@@ -48,36 +49,27 @@ const Login = () => {
     };
 
     const setUserInFirebase = async (email, password) => {
+        const emailTemp = email.replace(".", "_").replace("@", "_");
         const db = getDatabase();
-        await set(ref(db, "profile/" + email.replace(/[^a-zA-Z0-9]/g, "_")), {
-            email,
-            password,
+        const usersRef = ref(db, "profile/" + emailTemp);
+
+        onValue(usersRef, (snapshot) => {
+            if (snapshot.exists()) {
+                update(
+                    ref(db, "profile/" + email.replace(".", "_").replace("@", "_")),
+                    {
+                        email,
+                        password,
+                    }
+                );
+            } else {
+                set(ref(db, "profile/" + email.replace(".", "_").replace("@", "_")), {
+                    email,
+                    password,
+                });
+            }
         });
-        console.log("User saved to Realtime Database");
     };
-
-    // const setUserInFirebase = async (email, password) => {
-    //     const emailTemp = email.replace(".", "_").replace("@", "_");
-    //     const db = getDatabase();
-    //     const usersRef = ref(db, "profile/" + emailTemp);
-
-    //     onValue(usersRef, (snapshot) => {
-    //         if (snapshot.exists()) {
-    //             update(
-    //                 ref(db, "profile/" + email.replace(".", "_").replace("@", "_")),
-    //                 {
-    //                     email,
-    //                     password,
-    //                 }
-    //             );
-    //         } else {
-    //             set(ref(db, "profile/" + email.replace(".", "_").replace("@", "_")), {
-    //                 email,
-    //                 password,
-    //             });
-    //         }
-    //     });
-    // };
 
     return (
         <div style={styles.container}>
@@ -91,14 +83,32 @@ const Login = () => {
                     placeholder="Enter your email"
                     required
                 />
-                <Input
-                    label="Password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter your password"
-                    required
-                />
+                <div style={{ position: "relative" }}>
+                    <Input
+                        label="Password"
+                        type={showPassword ? "text" : "password"}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Enter your password"
+                        required
+                    />
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: "10px",
+                            top: "58%",
+                            transform: "translateY(-50%)",
+                            cursor: "pointer",
+                        }}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                    >
+                        {showPassword ? (
+                            <FaEye />
+                        ) : (
+                            <FaEyeSlash />
+                        )}
+                    </div>
+                </div>
                 <button type="submit" style={styles.button}>Login</button>
             </form>
         </div>

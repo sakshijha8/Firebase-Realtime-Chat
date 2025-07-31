@@ -14,14 +14,22 @@ const Chat = () => {
         deleteMessage: false,
         deleteId: ''
     });
+
+    const { isGroup = false } = state || {};
+
     const [editState, setEditState] = useState({ id: null, text: "" });
     const [chats, setChats] = useState([]);
     const chatId = [currentUser?.email, state?.email].sort().join("_").replace(/[^a-zA-Z0-9]/g, "_");
-    const chatRef = ref(db, "chats/" + chatId + "/messages");
+    const chatRef = isGroup ? ref(db, "groups/" + state?.email + "/messages") : ref(db, "chats/" + chatId + "/messages");
 
     const handleSend = () => {
         if (message.trim()) {
-            push(chatRef, {
+            push(chatRef, isGroup ? {
+                groupId: state?.email,
+                text: message,
+                sender: currentUser?.email,
+                senderName: currentUser?.email,
+            } : {
                 text: message,
                 sender: currentUser?.email,
                 receiver: state?.email,
@@ -69,15 +77,15 @@ const Chat = () => {
     };
 
     const handleDeleteMessage = async (messageId) => {
-        const messageRef = ref(db, `chats/${chatId}/messages/${messageId}`);
+        const messageRef = isGroup ? ref(db, `groups/${state?.email}/messages/${messageId}`) : ref(db, `chats/${chatId}/messages/${messageId}`);
         try {
             await remove(messageRef);
             alert("Message deleted successfully!");
             setIsDelete((prev) => ({
-                    ...prev,
-                    deleteId: '',
-                    deleteMessage: false,
-                }));
+                ...prev,
+                deleteId: '',
+                deleteMessage: false,
+            }));
         } catch (err) {
             console.error("Error deleting message:", err);
         }
@@ -86,9 +94,9 @@ const Chat = () => {
     const handleSaveEdit = async () => {
         if (!editState.text.trim()) return;
 
-        const messageRef = ref(db, `chats/${chatId}/messages/${editState.id}`);
+        const messageRef = isGroup ? ref(db, `groups/${state?.email}/messages/${editState?.id}`) : ref(db, `chats/${chatId}/messages/${editState?.id}`);
         try {
-            await update(messageRef, { text: editState.text });
+            await update(messageRef, { text: editState?.text });
             setEditState({ id: null, text: "" });
         } catch (err) {
             console.error("Error updating message:", err);
@@ -136,6 +144,16 @@ const Chat = () => {
                                         border: "1px solid #ccc",
                                         wordWrap: "break-word",
                                     }}>
+                                        <strong>
+                                            {isGroup
+                                                ? chat?.senderName === currentUser?.email
+                                                    ? "You"
+                                                    : chat?.senderName?.split("@")[0]
+                                                : chat?.sender === currentUser?.email
+                                                    ? "You"
+                                                    : state?.email?.split("@")[0]}
+                                            :
+                                        </strong>{" "}
                                         {chat?.text}
                                     </div>
                                     <div>
