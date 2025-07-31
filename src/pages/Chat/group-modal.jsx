@@ -67,46 +67,53 @@ const GroupModal = ({ users, onClose }) => {
     return (
         <div className="popup-overlay">
             <div className="popup-content">
-                <h3>Create New Group</h3>
+                <h3 className="popup-title">Create New Group</h3>
+
                 <input
+                    className="popup-input"
                     placeholder="Group name"
                     value={groupName}
                     onChange={(e) => setGroupName(e.target.value)}
                 />
 
-                <div style={{ marginTop: "1rem" }}>
+                <div className="popup-section">
                     <strong>Select Members:</strong>
-                    {Object.entries(users)?.map(([key, user]) => {
-                        if (user?.email === currentUser?.email) return null;
-                        return (
-                            <label key={key} style={{ display: "block", marginTop: "5px" }}>
-                                <input
-                                    type="checkbox"
-                                    value={key}
-                                    onChange={() => handleCheckbox(key)}
-                                    checked={selectedUsers?.includes(key)}
-                                />
-                                {user?.email}
-                            </label>
-                        );
-                    })}
+                    <div className="popup-users">
+                        {Object.entries(users)?.map(([key, user]) => {
+                            if (user?.email === currentUser?.email) return null;
+                            return (
+                                <label key={key} className="popup-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        value={key}
+                                        onChange={() => handleCheckbox(key)}
+                                        checked={selectedUsers?.includes(key)}
+                                    />
+                                    <span>{user?.email}</span>
+                                </label>
+                            );
+                        })}
+                    </div>
                 </div>
 
                 <textarea
+                    className="popup-textarea"
                     placeholder="Send a message to the group"
                     value={firstMessage}
                     onChange={(e) => setFirstMessage(e.target.value)}
-                    style={{ width: "100%", marginTop: "10px", height: "80px" }}
                 />
 
-                <div style={{ marginTop: "10px" }}>
-                    <button onClick={handleCreateGroup}>Create</button>
-                    <button onClick={onClose} style={{ marginLeft: "10px" }}>
+                <div className="popup-actions">
+                    <button className="popup-button" onClick={onClose}>
                         Cancel
+                    </button>
+                    <button className="popup-button primary" onClick={handleCreateGroup}>
+                        Create
                     </button>
                 </div>
             </div>
         </div>
+
     );
 };
 

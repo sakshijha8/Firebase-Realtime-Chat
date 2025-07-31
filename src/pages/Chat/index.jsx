@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { auth } from "../../firebase";
 import { useLocation, useNavigate } from "react-router-dom";
 import { getDatabase, onValue, push, ref, remove, update } from "firebase/database";
+import { CiEdit } from "react-icons/ci";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import { FaCheck } from "react-icons/fa";
+import { RxCross2 } from "react-icons/rx";
 
 const Chat = () => {
     const { state } = useLocation();
@@ -124,16 +128,28 @@ const Chat = () => {
                         }}>
 
                             {editState.id === chat.id ? (
-                                <>
+                                <div style={chatStyles.editInputWrapper}>
                                     <input
+                                        style={chatStyles.editInput}
                                         value={editState.text}
                                         onChange={(e) =>
                                             setEditState((prev) => ({ ...prev, text: e.target.value }))
                                         }
                                     />
-                                    <button onClick={handleSaveEdit}>Save</button>
-                                    <button onClick={() => setEditState({ id: null, text: "" })}>Cancel</button>
-                                </>
+                                    <button
+                                        style={{ ...chatStyles.editIconBtn, ...chatStyles.saveBtn }}
+                                        onClick={handleSaveEdit}
+                                    >
+                                        <FaCheck />
+                                    </button>
+                                    <button
+                                        style={{ ...chatStyles.editIconBtn, ...chatStyles.cancelBtn }}
+                                        onClick={() => setEditState({ id: null, text: "" })}
+                                    >
+                                        <RxCross2 />
+                                    </button>
+                                </div>
+
                             ) : (
                                 <>
                                     <div style={{
@@ -156,9 +172,9 @@ const Chat = () => {
                                         </strong>{" "}
                                         {chat?.text}
                                     </div>
-                                    <div>
-                                        <button onClick={() => handleEdit(chat.id, chat.text)}>Edit</button>
-                                        <button onClick={() => setIsDelete({ deleteMessage: true, deleteId: chat.id })}>Delete</button>
+                                    <div style={{ display: "flex", gap: "10px", marginLeft: "10px", alignItems: "center", cursor: "pointer" }}>
+                                        <div onClick={() => handleEdit(chat.id, chat.text)}><CiEdit /></div>
+                                        <div onClick={() => setIsDelete({ deleteMessage: true, deleteId: chat.id })} style={{ color: "#e01e5a" }}><RiDeleteBin5Line /></div>
                                     </div>
                                 </>
                             )}
@@ -182,7 +198,7 @@ const Chat = () => {
             {(isDelete.deleteConversation || isDelete.deleteMessage) && (
                 <div className="popup-overlay">
                     <div className="popup-content">
-                        <h2>
+                        <h2 style={{ fontSize: "20px", marginBottom: "10px" }}>
                             {isDelete.deleteMessage
                                 ? "Delete Message"
                                 : "Delete Conversation"}
@@ -194,32 +210,33 @@ const Chat = () => {
                                 : "delete the entire conversation"}
                             ? This action cannot be undone.
                         </p>
-                        <button
-                            onClick={() =>
-                                setIsDelete({
-                                    deleteMessage: false,
-                                    deleteConversation: false,
-                                })
-                            }
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (isDelete.deleteMessage) {
-                                    handleDeleteMessage(isDelete.deleteId);
+                        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                            <button
+                                onClick={() =>
+                                    setIsDelete({
+                                        deleteMessage: false,
+                                        deleteConversation: false,
+                                    })
                                 }
-                                if (isDelete.deleteConversation) {
-                                    handleDeleteConversation();
-                                }
-                            }}
-                            style={{
-                                backgroundColor: "#e01e5a",
-                                marginLeft: "12px",
-                            }}
-                        >
-                            Delete
-                        </button>
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (isDelete.deleteMessage) {
+                                        handleDeleteMessage(isDelete.deleteId);
+                                    }
+                                    if (isDelete.deleteConversation) {
+                                        handleDeleteConversation();
+                                    }
+                                }}
+                                style={{
+                                    backgroundColor: "#e01e5a",
+                                    marginLeft: "12px",
+                                }}
+                            >
+                                Delete
+                            </button></div>
                     </div>
                 </div>
             )}
@@ -266,6 +283,8 @@ const chatStyles = {
         marginBottom: "8px",
         padding: "6px 10px",
         borderRadius: "5px",
+        backgroundColor: "#fff",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
     },
     inputContainer: {
         display: "flex",
@@ -288,6 +307,47 @@ const chatStyles = {
         borderRadius: "5px",
         cursor: "pointer",
     },
+
+    editInputWrapper: {
+        display: "flex",
+        alignItems: "center",
+        gap: "6px",
+        padding: "4px",
+        border: "1px solid #ccc",
+        borderRadius: "8px",
+        background: "#fff",
+        maxWidth: "350px",
+    },
+    editInput: {
+        flex: 1,
+        padding: "6px 8px",
+        fontSize: "14px",
+        border: "none",
+        outline: "none",
+        borderRadius: "4px",
+    },
+    editIconBtn: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "4px 6px",
+        fontSize: "16px",
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        borderRadius: "4px",
+        transition: "background 0.2s ease",
+    },
+    editIconBtnHover: {
+        background: "#f0f0f0",
+    },
+    saveBtn: {
+        color: "#2e7d32",
+    },
+    cancelBtn: {
+        color: "#c62828",
+    },
 };
+
 
 export default Chat;
