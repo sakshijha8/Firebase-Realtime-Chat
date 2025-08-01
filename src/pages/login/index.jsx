@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import Input from "../../components/Input";
 import { auth } from "../../firebase";
@@ -34,6 +34,7 @@ const Login = () => {
             const { user } = await signInWithEmailAndPassword(auth, email, password)
                 .then(async () => {
                     await setUserInFirebase(email, password);
+                    sessionStorage.setItem("userEmail", email);
                     navigate("/dashboard");
                 })
                 .catch((error) => {
@@ -70,6 +71,13 @@ const Login = () => {
             }
         });
     };
+
+    useEffect(() => {
+        if (sessionStorage.getItem("userEmail")) {
+            navigate("/dashboard");
+        }
+    }, []);
+
 
     return (
         <div style={styles.container}>

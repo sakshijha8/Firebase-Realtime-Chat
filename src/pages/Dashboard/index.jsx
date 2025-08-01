@@ -3,12 +3,13 @@ import { getDatabase, ref, onValue } from "firebase/database";
 import { auth } from "../../firebase";
 import { useNavigate } from "react-router-dom";
 import GroupModal from "../Chat/group-modal";
+import { IoMdLogOut } from "react-icons/io";
 
 const Dashboard = () => {
   const navigate = useNavigate()
   const [users, setUsers] = useState({});
   const [groups, setGroups] = useState({});
-  const currentUser = auth.currentUser;
+  const currentUser = auth?.currentUser;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const db = getDatabase();
   const getProfilePath = (email) => {
@@ -47,71 +48,78 @@ const Dashboard = () => {
     };
   }, []);
 
+  const handleLogout = () => {
+    sessionStorage.removeItem("userEmail"); 
+    navigate("/login");
+  };
 
- return (
-  <div style={listStyles.container}>
-    <div style={listStyles.header}>
-      <h2 style={listStyles.title}>All Users</h2>
-      <button
-        style={listStyles.createGroupButton}
-        onClick={() => setIsModalOpen(true)}
-      >
-        + Create Group
-      </button>
-    </div>
-
-    <ul style={listStyles.userList}>
-      {Object.entries(users)
-        .filter(([_, user]) => user.email !== currentUser?.email)
-        .map(([key, user]) => (
-          <li
-            key={key}
-            onClick={() => navigate(`/chat/${key}`, { state: user })}
-            style={listStyles.userItem}
-            onMouseEnter={(e) =>
+  return (
+    <div style={listStyles.container}>
+      <div style={listStyles.header}>
+        <h2 style={listStyles.title}>All Users</h2>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <button
+            style={listStyles.createGroupButton}
+            onClick={() => setIsModalOpen(true)}
+          >
+            + Create Group
+          </button>
+          <div style={{cursor: "pointer"}} onClick={handleLogout}> 
+          <IoMdLogOut size={24}/></div>
+        </div>
+      </div>
+      <ul style={listStyles.userList}>
+        {Object.entries(users)
+          .filter(([_, user]) => user.email !== currentUser?.email)
+          .map(([key, user]) => (
+            <li
+              key={key}
+              onClick={() => navigate(`/chat/${key}`, { state: user })}
+              style={listStyles.userItem}
+              onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor =
                 listStyles.userItemHover.backgroundColor)
-            }
-            onMouseLeave={(e) =>
+              }
+              onMouseLeave={(e) =>
               (e.currentTarget.style.backgroundColor =
                 listStyles.userItem.backgroundColor)
-            }
-          >
-            {user?.email}
-          </li>
-        ))}
-    </ul>
+              }
+            >
+              {user?.email}
+            </li>
+          ))}
+      </ul>
 
-    <div>
-      <h3 style={listStyles.groupSectionTitle}>Your Groups</h3>
-      <ul style={listStyles.userList}>
-        {Object.entries(groups?.chats || {}).map(([key, item]) => (
-          <li
-            key={key}
-            onClick={() =>
-              navigate(`/chat/${key}`, {
-                state: { email: item?.withUser, isGroup: true },
-              })
-            }
-            style={listStyles.groupItem}
-            onMouseEnter={(e) =>
+      <div>
+        <h3 style={listStyles.groupSectionTitle}>Your Groups</h3>
+        <ul style={listStyles.userList}>
+          {Object.entries(groups?.chats || {}).map(([key, item]) => (
+            <li
+              key={key}
+              onClick={() =>
+                navigate(`/chat/${key}`, {
+                  state: { email: item?.withUser, isGroup: true },
+                })
+              }
+              style={listStyles.groupItem}
+              onMouseEnter={(e) =>
               (e.currentTarget.style.backgroundColor =
                 listStyles.groupItemHover.backgroundColor)
-            }
-            onMouseLeave={(e) =>
+              }
+              onMouseLeave={(e) =>
               (e.currentTarget.style.backgroundColor =
                 listStyles.groupItem.backgroundColor)
-            }
-          >
-            {item?.groupName}
-          </li>
-        ))}
-      </ul>
-    </div>
+              }
+            >
+              {item?.groupName}
+            </li>
+          ))}
+        </ul>
+      </div>
 
-    {isModalOpen && <GroupModal users={users} onClose={() => setIsModalOpen(false)} />}
-  </div>
-);
+      {isModalOpen && <GroupModal users={users} onClose={() => setIsModalOpen(false)} />}
+    </div>
+  );
 };
 
 const listStyles = {
